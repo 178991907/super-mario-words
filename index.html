@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>马里奥英语单词冒险游乐场 - 在线学词</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-bg: rgba(22, 28, 45, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-color: #f1f5f9;
+            --text-muted: #64748b;
+            --primary-color: #3b82f6;
+            --success-color: #10b981;
+            --accent-color: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 15px;
+        }
+
+        .container {
+            max-width: 1540px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .logo-area h1 {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #3b82f6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-area p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        a.btn, button.btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* 游戏区域的外壳容器 */
+        .game-wrapper {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        /* iframe 自适应 */
+        .iframe-container {
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            max-height: 900px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            background: black;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .iframe-container:fullscreen {
+            max-height: none !important;
+            border-radius: 0 !important;
+            border: none !important;
+            aspect-ratio: auto !important;
+        }
+        .iframe-container:-webkit-full-screen {
+            max-height: none !important;
+            border-radius: 0 !important;
+            border: none !important;
+            aspect-ratio: auto !important;
+        }
+
+        /* 控制指示器 */
+        .controls-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .info-card h4 {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .info-card p {
+            font-size: 14px;
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+
+        /* 顶部的实时学习指标 */
+        .stats-strip {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 14px;
+        }
+
+        .stats-item span {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header style="padding-bottom: 20px;">
+            <div class="logo-area" style="display: flex; align-items: center; gap: 20px;">
+                <div style="background: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; height: 120px; width: 120px; overflow: hidden; padding: 0; box-sizing: border-box;">
+                    <img src="https://pic1.imgdb.cn/item/69ef705d5b9ddfae24416b56.png" alt="Mario Logo" style="height: 100%; width: 100%; object-fit: contain;">
+                </div>
+                <div>
+                    <h1 style="margin: 0; font-size: 32px; display: flex; align-items: center; gap: 8px; letter-spacing: -0.5px;">马里奥英语单词冒险游乐场</h1>
+                    <p style="margin: 8px 0 0 0; font-size: 15px; color: var(--text-muted); font-weight: 500;">在快乐的游戏冒险中，顶砖块学习高频英文词汇！</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="admin.html" class="btn btn-primary" style="padding: 12px 22px; font-size: 14px; font-weight: 600;">📖 词库与 PDF 提取后台</a>
+            </div>
+        </header>
+
+        <!-- 实时学习统计 -->
+        <div class="stats-strip">
+            <div class="stats-item">游戏词汇难度: <span id="diff-level">小学 (Level 1)</span></div>
+            <div class="stats-item">已学习词汇量: <span id="learned-count">0</span></div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <label style="font-size:12px; color:var(--text-muted); font-weight:600;">画面大小:</label>
+                    <select id="size-selector" style="background:rgba(15,23,42,0.6); border:1px solid var(--border-color); border-radius:6px; color:white; padding:4px 8px; font-size:12px; outline:none; cursor:pointer;" onchange="changeGameSize(this.value)">
+                        <option value="small">小 (640x400)</option>
+                        <option value="medium">中 (800x500)</option>
+                        <option value="large">大 (1000x625)</option>
+                        <option value="xlarge">超大 (1200x750)</option>
+                        <option value="xxlarge" selected>巨屏 (1440x900)</option>
+                    </select>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <label style="font-size:12px; color:var(--text-muted); font-weight:600;">选择关卡:</label>
+                    <select id="map-selector" style="background:rgba(15,23,42,0.6); border:1px solid var(--border-color); border-radius:6px; color:white; padding:4px 8px; font-size:12px; outline:none; cursor:pointer;" onchange="changeGameMap(this.value)">
+                        <!-- World 1 -->
+                        <option value="1,1" selected>World 1-1</option>
+                        <option value="1,2">World 1-2</option>
+                        <option value="1,3">World 1-3</option>
+                        <option value="1,4">World 1-4</option>
+                        <!-- World 2 -->
+                        <option value="2,1">World 2-1</option>
+                        <option value="2,2">World 2-2</option>
+                        <option value="2,3">World 2-3</option>
+                        <option value="2,4">World 2-4</option>
+                        <!-- World 3 -->
+                        <option value="3,1">World 3-1</option>
+                        <option value="3,2">World 3-2</option>
+                        <option value="3,3">World 3-3</option>
+                        <option value="3,4">World 3-4</option>
+                        <!-- World 4 -->
+                        <option value="4,1">World 4-1</option>
+                        <option value="4,2">World 4-2</option>
+                        <option value="4,3">World 4-3</option>
+                        <option value="4,4">World 4-4</option>
+                        <!-- World 5 -->
+                        <option value="5,1">World 5-1</option>
+                        <option value="5,2">World 5-2</option>
+                        <option value="5,3">World 5-3</option>
+                        <option value="5,4">World 5-4</option>
+                        <!-- World 6 -->
+                        <option value="6,1">World 6-1</option>
+                        <option value="6,2">World 6-2</option>
+                        <option value="6,3">World 6-3</option>
+                        <option value="6,4">World 6-4</option>
+                        <!-- World 7 -->
+                        <option value="7,1">World 7-1</option>
+                        <option value="7,2">World 7-2</option>
+                        <option value="7,3">World 7-3</option>
+                        <option value="7,4">World 7-4</option>
+                        <!-- World 8 -->
+                        <option value="8,1">World 8-1</option>
+                        <option value="8,2">World 8-2</option>
+                        <option value="8,3">World 8-3</option>
+                        <option value="8,4">World 8-4</option>
+                    </select>
+                </div>
+                <button class="btn btn-secondary" style="padding: 5px 12px; font-size:12px;" onclick="toggleFullscreen()">📺 一键全屏</button>
+                <button class="btn btn-secondary" id="toggle-diff-btn" style="padding: 5px 12px; font-size:12px;" onclick="toggleDifficulty()">切换为初中词库</button>
+            </div>
+        </div>
+
+        <!-- 游戏主容器 -->
+        <div class="game-wrapper">
+            <div class="iframe-container" style="width: 100%;">
+                <!-- 嵌入修改后的游戏页面 -->
+                <iframe src="game/mario.html" id="game-iframe"></iframe>
+            </div>
+            
+            <!-- 游戏操作指导 -->
+            <div class="controls-info">
+                <div class="info-card">
+                    <h4>🚶 左右移动</h4>
+                    <p>W-A-S-D 或 方向键 [↑→↓←]</p>
+                </div>
+                <div class="info-card">
+                    <h4>⚡ 点火 & 冲刺</h4>
+                    <p>按住 Shift / Ctrl 键</p>
+                </div>
+                <div class="info-card">
+                    <h4>⏸️ 暂停 & 静音</h4>
+                    <p>P键 暂停 / M键 静音</p>
+                </div>
+            </div>
+
+            <!-- 项目开发致谢说明 (Credits) -->
+            <div class="credits-panel" style="width: 100%; background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px 30px; margin-top: 15px; font-size: 14px; color: var(--text-muted); line-height: 1.8; text-align: justify; box-sizing: border-box; backdrop-filter: blur(10px);">
+                <p style="margin: 0; font-weight: 700; color: rgba(255, 255, 255, 0.9); font-size: 16px; margin-bottom: 8px; letter-spacing: 0.5px; text-align: center;">💡 项目研发声明与致谢</p>
+                <p style="margin: 0; text-indent: 2em; letter-spacing: 0.3px;">本项目由 <strong style="color: #34d399; font-weight: 700;">Kenneth</strong> 以卓越的产品洞察力提出前瞻性教育游戏创意，并深度策划了寓教于乐的单词卡片互动玩法。作为项目核心发起人与首席架构师，<strong style="color: #34d399; font-weight: 700;">Kenneth</strong>主导实现了游戏金币得分与教育认读系统的底层融合功能。在这一极具颠覆性的教学模式指引下，<strong style="color: #60a5fa; font-weight: 700;">AI 智能工具</strong> 作为高效率的辅助编码协作者，遵照 Kenneth 极其专业且严苛的工程规范完成了代码的联合编写与云端部署。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 定时轮询 LocalStorage 状态，在主壳页面显示同步的学习数据
+        function syncStats() {
+            var learned = localStorage.getItem('mario_learned_count') || '0';
+            var level = localStorage.getItem('mario_level') || '1';
+            
+            document.getElementById('learned-count').innerText = learned;
+            document.getElementById('diff-level').innerText = level === '1' ? '小学 (Level 1)' : '初中 (Level 2)';
+            
+            // 动态修改切换按钮的文字
+            var toggleBtn = document.getElementById('toggle-diff-btn');
+            if (toggleBtn) {
+                toggleBtn.innerText = level === '1' ? '切换为初中词库' : '切换为小学词库';
+            }
+        }
+
+        // 切换难度的便捷方式
+        function toggleDifficulty() {
+            var current = parseInt(localStorage.getItem('mario_level') || '1', 10);
+            var next = current === 1 ? 2 : 1;
+            localStorage.setItem('mario_level', next);
+            syncStats();
+            
+            // 重新刷新游戏 iframe 让它读取最新等级的词库
+            document.getElementById('game-iframe').contentWindow.location.reload();
+            alert('已成功切换难度为：' + (next === 1 ? '小学 (Level 1)' : '初中 (Level 2)') + '，游戏已重新加载！');
+        }
+
+        // 动态调整游戏窗口大小
+        // 动态调整游戏窗口大小
+        function changeGameSize(size) {
+            var container = document.querySelector('.container');
+            var iframeContainer = document.querySelector('.iframe-container');
+            if (!container || !iframeContainer) return;
+            switch(size) {
+                case 'small':
+                    container.style.maxWidth = '700px';
+                    iframeContainer.style.maxHeight = '400px';
+                    break;
+                case 'medium':
+                    container.style.maxWidth = '900px';
+                    iframeContainer.style.maxHeight = '500px';
+                    break;
+                case 'large':
+                    container.style.maxWidth = '1100px';
+                    iframeContainer.style.maxHeight = '625px';
+                    break;
+                case 'xlarge':
+                    container.style.maxWidth = '1300px';
+                    iframeContainer.style.maxHeight = '750px';
+                    break;
+                case 'xxlarge':
+                    container.style.maxWidth = '1540px';
+                    iframeContainer.style.maxHeight = '900px';
+                    break;
+            }
+            // 延迟 150ms 重新加载，等待浏览器排版引擎（Reflow）异步调整完大容器和物理 iframe 的实际高宽，保障获取尺寸 100% 准确
+            setTimeout(function() {
+                var iframe = document.getElementById('game-iframe');
+                if (iframe) {
+                    iframe.contentWindow.location.reload();
+                }
+            }, 150);
+        }
+        // 切换关卡函数
+        function changeGameMap(val) {
+            var parts = val.split(',');
+            var world = parseInt(parts[0], 10);
+            var area = parseInt(parts[1], 10);
+            
+            var iframe = document.getElementById('game-iframe');
+            if (iframe && iframe.contentWindow && typeof iframe.contentWindow.setMap === 'function') {
+                iframe.contentWindow.setMap(world, area);
+                // 自动给游戏视窗 focus，使用户可以无缝操纵键盘
+                iframe.focus();
+            } else {
+                alert('游戏还在加载中，请稍候再试！');
+            }
+        }
+        // 一键全屏切换逻辑
+        function toggleFullscreen() {
+            var container = document.querySelector('.iframe-container');
+            if (!container) return;
+            if (!document.fullscreenElement) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.mozRequestFullScreen) {
+                    container.mozRequestFullScreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // 监听全屏状态改变，自动重载游戏刷新 unitsize 以实现像素级等比例全屏填充
+        document.addEventListener('fullscreenchange', function() {
+            var iframe = document.getElementById('game-iframe');
+            if (iframe) {
+                setTimeout(function() {
+                    iframe.contentWindow.location.reload();
+                }, 150);
+            }
+        });
+        document.addEventListener('webkitfullscreenchange', function() {
+            var iframe = document.getElementById('game-iframe');
+            if (iframe) {
+                setTimeout(function() {
+                    iframe.contentWindow.location.reload();
+                }, 150);
+            }
+        });
+
+        // 初始化
+        setInterval(syncStats, 1000);
+        syncStats();
+    </script>
+</body>
+</html>

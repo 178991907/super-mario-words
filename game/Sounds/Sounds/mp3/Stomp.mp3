@@ -1,0 +1,260 @@
+<!DOCTYPE HTML>
+<html lang="en-us">
+    <head>
+        <meta charset="utf-8">
+        <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' >
+        <title>Page not found - supermarioplay.com</title>
+        <meta name="description" content="">
+        <meta name='robots' content='noindex, follow' />
+
+        <link rel="stylesheet" href="https://supermarioplay.com/css/default.css?v=1.0.0">
+
+
+        
+
+        <script data-ad-client="ca-pub-9188111327301743" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+        <style>
+
+            .article-card {
+                width: 100%;
+                margin: 0 auto 40px;
+            }
+
+            @media (min-width: 768px) {
+                .article-card {
+                    width: calc(50% - 40px);
+                    margin: 0 20px 40px;
+                    float: left;
+                }
+            }
+
+
+            element.style {
+            }
+            .article-card header p a {
+                color: #000;
+                text-decoration: none;
+                transition: opacity .2s;
+            }
+            a {
+                transition: color .2s;
+                color: ;
+            }
+            a {
+                color: #0f7faf;
+                text-decoration: underline;
+            }
+            a {
+                background-color: transparent;
+            }
+            *, *:before, *:after {
+                box-sizing: inherit;
+            }
+
+            .article-card header p {
+                font-weight: 700;
+                font-size: 18px;
+                margin-bottom: 10px;
+                text-align: center;
+            }
+
+            .article-card header p a {
+                color: #000;
+                text-decoration: none;
+                transition: opacity .2s;
+                font-family: "libre_franklinregular",Arial,Helvetica,sans-serif;
+            }
+
+            button, input[type="button"], input[type="reset"], input[type="submit"], .button {
+                border: 1px solid transparent;
+                border-radius: 3px;
+                background: #363940;
+                color: #fff!important;
+                font-family: "Roboto Condensed","Arial Narrow",Arial,Helvetica,sans-serif;
+                line-height: 1;
+                padding: 8px 18px;
+                text-transform: uppercase;
+                text-decoration: none;
+                transition: all .2s;
+                font-weight: 700;
+                letter-spacing: 1px;
+                font-size: 16px;
+                font-size: 1rem;
+                font-style: normal;
+            }
+            .article-card.horizontal {
+                margin-bottom: 40px;
+                float: none;
+                width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+                content: "";
+                display: table;
+                table-layout: fixed;
+            }
+
+            .article-card .excerpt {
+                margin-top: -5px;
+                margin-bottom: 20px;
+            }
+
+            .article-card .excerpt p {
+                line-height: 1.5;
+                margin-bottom: 25px;
+            }
+            .article-card .button-container {
+                text-align: right;
+            }
+            .recent-articles-container .article-card .button-container {
+                text-align: center;
+            }
+
+            @media (min-width: 768px) {
+                .article-card.horizontal .image-container {
+                    float: left;
+                    margin-bottom: 0;
+                }
+            }
+
+            .article-card.horizontal .image-container {
+                width: 300px;
+                height: 200px;
+                margin: 0 auto 20px;
+            }
+            .article-card a .image-container {
+                transition: opacity .2s;
+            }
+
+            .article-card header span a {
+                font-size: 20px;
+                margin-bottom: 10px;
+                text-align: center;
+            }
+
+            .article-card header span a {
+                color: #000;
+                text-decoration: none;
+                font-family: "libre_franklinregular",Arial,Helvetica,sans-serif;
+                transition: opacity .2s;
+            }
+
+            .article-card .image-container {
+                height: 260px;
+                background-repeat: no-repeat;
+                background-size: cover;
+                background-position: center;
+                margin-bottom: 20px;
+                width: 100%;
+            }
+
+            .sr-only {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0,0,0,0);
+                border: 0;
+            }
+
+            @media (min-width: 768px) {
+                .article-card.horizontal .copy-container {
+                    float: left;
+                    margin-left: 40px;
+                    width: calc(100% - 340px);
+                }
+            }
+
+            @media (min-width: 768px) {
+                .articles-wrapper {
+                    text-align: left;
+                }
+            }
+            .articles-wrapper {
+                margin-top: 24px;
+            }
+
+            button:hover, button:active, button:focus, input[type="button"]:hover, input[type="button"]:active, input[type="button"]:focus, input[type="reset"]:hover, input[type="reset"]:active, input[type="reset"]:focus, input[type="submit"]:hover, input[type="submit"]:active, input[type="submit"]:focus, .button:hover, .button:active, .button:focus {
+                opacity: .8;
+            }
+
+            button, input[type="button"], input[type="reset"], input[type="submit"], .button {
+                border: 1px solid transparent;
+                border-radius: 3px;
+                background: #363940;
+                color: #fff!important;
+                font-family: "Roboto Condensed","Arial Narrow",Arial,Helvetica,sans-serif;
+                line-height: 1;
+                padding: 8px 18px;
+                text-transform: uppercase;
+                text-decoration: none;
+                transition: all .2s;
+                font-weight: 700;
+                letter-spacing: 1px;
+                font-size: 16px;
+                font-size: 1rem;
+                font-style: normal;
+            }
+
+            .recent-articles-container {
+                margin-top: 20px;
+                content: "";
+                display: table;
+                table-layout: fixed;
+            }
+        </style>
+    </head>
+
+    <body  class="">
+        <div id="main">
+
+                <div class="site-description padding-15">
+                    <a href="//supermarioplay.com"><img src="//supermarioplay.com/super_mario_bros_logo.png" alt="SuperMarioPlay logo" title="Play Super Mario Bros. online"></a>
+                        <h1 class="sd-title">play the original Super Mario Bros game online for free</h1>
+                </div>
+
+                <div class="topmenu padding-15">
+                    <a href="/">Play</a> —
+                    <a href="https://supermarioplay.com/blog">Blog</a> —
+                    <a href="https://supermarioplay.com/gameplay">Gameplay</a> —
+                    <a href="https://supermarioplay.com/history">History</a> —
+                    <a href="https://supermarioplay.com/mediafiles">Media</a>  —
+                    <a href="https://supermarioplay.com/contact">Contact</a>
+                </div>
+
+                <br>
+    <center>
+        <img src="/assets/img/404.png" alt="Page not found">
+    </center>
+    <br><br>
+
+                    <div class="footermenu padding-15">
+                        <div>© Super Mario Bros. 2026 </div>
+
+                        <div style="display:inline-block;">
+                            <a href="https://supermarioplay.com/gameplay">Gameplay</a> —
+                            <a href="https://supermarioplay.com/history">History</a> —
+                            <a href="https://supermarioplay.com/mediafiles">Media</a> —
+                            <a href="https://supermarioplay.com/contact">Contact</a> —
+                            <a href="https://supermarioplay.com/policy">Privacy policy</a>
+                        </div>
+                    </div>
+        </div>
+
+        <div id="cookies-policy-popup">
+            This website uses cookies to deliver the best possible user experience. You can read more about this in our <a href="/policy">Privacy Policy</a>. &nbsp; <span>OK</span>
+        </div>
+
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-591WKVPWTS"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-591WKVPWTS');
+        </script>
+    </body>
+</html>

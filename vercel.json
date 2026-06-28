@@ -1,0 +1,13 @@
+{
+  "cleanUrls": true,
+  "routes": [
+    {
+      "src": "/admin",
+      "dest": "/admin.html"
+    },
+    {
+      "src": "/game/(.*)",
+      "dest": "/game/$1"
+    }
+  ]
+}

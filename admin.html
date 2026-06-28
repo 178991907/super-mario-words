@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>马里奥英语学习游戏 - 词库管理后台</title>
+    <!-- 引入 Mozilla PDF.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --accent-color: #eab308;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            border-left: 4px solid var(--primary-color);
+            padding-left: 10px;
+            color: #e2e8f0;
+        }
+
+        /* 拖拽上传区 */
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.02);
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary-color);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .upload-area p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        /* 输入配置 */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+
+        select, input[type="text"], textarea {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input[type="text"]:focus, textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* 提取出的预览列表 */
+        .preview-list {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .preview-header, .preview-row {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1fr 1fr;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .preview-header {
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+        }
+
+        .preview-row input {
+            border: none;
+            background: transparent;
+            color: white;
+            padding: 5px;
+            width: 95%;
+        }
+
+        .preview-row input:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        /* 全局词库管理区 */
+        .vocabulary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .vocabulary-table th, .vocabulary-table td {
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .vocabulary-table th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .vocabulary-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .badge-level-1 {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .badge-level-2 {
+            background-color: rgba(234, 179, 8, 0.2);
+            color: #facc15;
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: transparent;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .table-container {
+            max-height: 550px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        /* 新增单词弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        /* 状态条 */
+        .status-bar {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-info {
+            display: flex;
+            gap: 20px;
+        }
+
+        .status-item span {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍄 马里奥英语单词学习词库管理</h1>
+            <div class="nav-buttons">
+                <button class="btn-secondary" onclick="window.location.href='index.html'">🏠 返回首页</button>
+                <button class="btn-secondary" onclick="window.open('game/mario.html', '_blank')">🎮 测试游玩</button>
+                <button class="btn-primary" onclick="showAddModal()">➕ 添加单词</button>
+            </div>
+        </header>
+
+        <!-- 状态及总览信息 -->
+        <div class="status-bar">
+            <div class="status-info">
+                <div class="status-item">当前关卡难度: <span id="current-level-display">小学 (Level 1)</span></div>
+                <div class="status-item">已学习单词总数: <span id="learned-count-display">0</span></div>
+                <div class="status-item">词库总词量: <span id="total-words-display">0</span></div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-secondary" id="switch-diff-btn" style="padding:6px 12px; font-size:12px;" onclick="switchDifficulty()">切换当前难度</button>
+                <button class="btn-danger" style="padding:6px 12px; font-size:12px;" onclick="resetLocalStorage()">重置为默认词库</button>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- 左侧：PDF解析与单词提取 -->
+            <div class="panel">
+                <h2>📥 自动提取与解析</h2>
+                
+                <!-- 拖拽上传 PDF -->
+                <div class="upload-area" id="drop-zone" onclick="document.getElementById('pdf-file').click()">
+                    <div class="upload-icon">📄</div>
+                    <p>点击选择或将 <strong>PDF 英文教程</strong> 拖拽到这里</p>
+                    <p style="font-size:12px; color:rgba(255,255,255,0.4)">由 Mozilla pdf.js 提供支持的浏览器纯前端解析</p>
+                    <input type="file" id="pdf-file" accept="application/pdf" style="display:none" onchange="handleFileSelect(event)">
+                </div>
+
+                <!-- 粘贴纯文本作为备选 -->
+                <div class="form-group">
+                    <label for="raw-text">或者，在此直接粘贴英文教学文本：</label>
+                    <textarea id="raw-text" rows="4" placeholder="粘贴整段英文内容... 后台将自动过滤出单词并翻译"></textarea>
+                </div>
+
+                <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <label style="display:inline-block; margin-right:10px;">设定提取出的单词难度：</label>
+                        <select id="extract-level" style="width:120px; display:inline-block;">
+                            <option value="1">小学 (Level 1)</option>
+                            <option value="2">初中 (Level 2)</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" onclick="extractFromText()">⚡ 立即提取单词</button>
+                </div>
+
+                <!-- 提取出来的待确认预览列表 -->
+                <div id="extraction-preview-section" style="display:none; margin-top:20px;">
+                    <h3 style="font-size:14px; margin-bottom:10px; color:#e2e8f0;">🔍 自动分析的词汇预览 (可双击修改中文翻译)</h3>
+                    <div class="preview-list">
+                        <div class="preview-header">
+                            <div>英文单词</div>
+                            <div>中文翻译</div>
+                            <div>难度</div>
+                            <div>操作</div>
+                        </div>
+                        <div id="preview-rows-container">
+                            <!-- 动态插入 -->
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
+                        <button class="btn-secondary" onclick="cancelPreview()">取消</button>
+                        <button class="btn-success" onclick="addAllSelectedWords()">确认导入词库</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：词库管理表格 -->
+            <div class="panel">
+                <div style="display:flex; justify-content:between; align-items:center; margin-bottom:15px;">
+                    <h2 style="margin-bottom:0">📚 游戏词库列表 (同步 LocalStorage)</h2>
+                </div>
+                
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button class="btn-secondary" style="flex:1" onclick="document.getElementById('import-file').click()">📤 导入 JSON 词库</button>
+                    <button class="btn-success" style="flex:1" onclick="exportJSON()">📥 导出并下载 JSON</button>
+                    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
+                </div>
+
+                <div class="table-container">
+                    <table class="vocabulary-table">
+                        <thead>
+                            <tr>
+                                <th>英文</th>
+                                <th>中文释义</th>
+                                <th>难度</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="words-table-body">
+                            <!-- 动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/编辑模态弹窗 -->
+    <div class="modal" id="word-modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modal-title">添加新英文单词</div>
+            <input type="hidden" id="edit-index" value="">
+            <div class="form-group">
+                <label for="word-en">英文单词 (EN)：</label>
+                <input type="text" id="word-en" placeholder="例如: apple">
+            </div>
+            <div class="form-group">
+                <label for="word-cn">中文翻译 (CN)：</label>
+                <input type="text" id="word-cn" placeholder="例如: 苹果">
+            </div>
+            <div class="form-group">
+                <label for="word-level">难度级别：</label>
+                <select id="word-level">
+                    <option value="1">小学 (Level 1)</option>
+                    <option value="2">初中 (Level 2)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="word-example">简单英文例句：</label>
+                <textarea id="word-example" rows="3" placeholder="例如: This is a red apple."></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeWordModal()">取消</button>
+                <button class="btn-primary" onclick="saveWord()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 pdf.js 库的 Worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        // 默认小学/初中常见单词库的快速中文翻译比对表，保障解析无网也能自动翻译一部分词
+        const commonDict = {
+            "apple": "苹果", "banana": "香蕉", "cat": "猫", "dog": "狗", "orange": "橙子",
+            "school": "学校", "teacher": "老师", "student": "学生", "book": "书", "pen": "钢笔",
+            "future": "未来", "adventure": "冒险", "challenge": "挑战", "science": "科学",
+            "technology": "技术", "history": "历史", "beautiful": "美丽的", "nature": "大自然",
+            "family": "家庭", "brother": "兄弟", "sister": "姐妹", "water": "水", "milk": "牛奶"
+            // 其他没有在本地列表的单词，我们将通过免费翻译API进行在线提取翻译
+        };
+
+        let currentWordsList = [];
+        let previewWords = [];
+
+        // 初始化
+        window.addEventListener('load', () => {
+            loadWordsList();
+            setupDragAndDrop();
+        });
+
+        // 加载词库
+        function loadWordsList() {
+            let saved = localStorage.getItem('mario_words');
+            if (saved) {
+                try {
+                    currentWordsList = JSON.parse(saved);
+                } catch(e) {
+                    currentWordsList = [];
+                }
+            }
+            if (!currentWordsList || currentWordsList.length === 0) {
+                // 如果为空，尝试加载默认words.json
+                fetch('data/words.json')
+                    .then(res => res.json())
+                    .then(data => {
+                        currentWordsList = data.words || [];
+                        saveAndRefresh();
+                    })
+                    .catch(() => {
+                        // 彻底降级
+                        currentWordsList = [
+                            {"en": "apple", "cn": "苹果", "level": 1, "example": "A red apple."},
+                            {"en": "banana", "cn": "香蕉", "level": 1, "example": "Yellow banana."}
+                        ];
+                        saveAndRefresh();
+                    });
+            } else {
+                renderWordsTable();
+                updateStatusBar();
+            }
+        }
+
+        // 保存并刷新界面
+        function saveAndRefresh() {
+            localStorage.setItem('mario_words', JSON.stringify(currentWordsList));
+            renderWordsTable();
+            updateStatusBar();
+        }
+
+        function updateStatusBar() {
+            const count = localStorage.getItem('mario_learned_count') || '0';
+            const level = localStorage.getItem('mario_level') || '1';
+            
+            document.getElementById('learned-count-display').innerText = count;
+            document.getElementById('current-level-display').innerText = level == '1' ? '小学 (Level 1)' : '初中 (Level 2)';
+            document.getElementById('total-words-display').innerText = currentWordsList.length;
+            
+            const switchBtn = document.getElementById('switch-diff-btn');
+            if (switchBtn) {
+                switchBtn.innerText = level == '1' ? '切换为初中难度' : '切换为小学难度';
+            }
+        }
+
+        // 切换游戏关卡难度
+        function switchDifficulty() {
+            let current = parseInt(localStorage.getItem('mario_level') || '1', 10);
+            let next = current === 1 ? 2 : 1;
+            localStorage.setItem('mario_level', next);
+            updateStatusBar();
+            alert('已成功将当前游戏内调取难度切换为：' + (next === 1 ? '小学 (Level 1)' : '初中 (Level 2)'));
+        }
+
+        // 渲染主表格
+        function renderWordsTable() {
+            const tbody = document.getElementById('words-table-body');
+            tbody.innerHTML = '';
+            
+            currentWordsList.forEach((word, index) => {
+                const tr = document.createElement('tr');
+                const badgeClass = word.level == 1 ? 'badge-level-1' : 'badge-level-2';
+                const badgeText = word.level == 1 ? '小学' : '初中';
+
+                tr.innerHTML = `
+                    <td style="font-weight: 700;">${word.en}</td>
+                    <td>${word.cn}</td>
+                    <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+                    <td class="action-cell">
+                        <button class="icon-btn" onclick="editWord(${index})">✏️</button>
+                        <button class="icon-btn" style="color:var(--danger-color);" onclick="deleteWord(${index})">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 重置词库
+        function resetLocalStorage() {
+            if (confirm('确认清空您的自定义词库并重置为预设词库吗？您的本地编辑将丢失。')) {
+                localStorage.removeItem('mario_words');
+                localStorage.removeItem('mario_learned_count');
+                localStorage.removeItem('mario_level');
+                loadWordsList();
+            }
+        }
+
+        // 删除单词
+        function deleteWord(index) {
+            if (confirm(`确定从词库中删除单词 "${currentWordsList[index].en}" 吗？`)) {
+                currentWordsList.splice(index, 1);
+                saveAndRefresh();
+            }
+        }
+
+        // 添加/编辑弹窗展示
+        function showAddModal() {
+            document.getElementById('modal-title').innerText = '添加新英文单词';
+            document.getElementById('edit-index').value = '';
+            document.getElementById('word-en').value = '';
+            document.getElementById('word-cn').value = '';
+            document.getElementById('word-level').value = '1';
+            document.getElementById('word-example').value = '';
+            document.getElementById('word-modal').style.display = 'flex';
+        }
+
+        function editWord(index) {
+            const word = currentWordsList[index];
+            document.getElementById('modal-title').innerText = '编辑英文单词';
+            document.getElementById('edit-index').value = index;
+            document.getElementById('word-en').value = word.en;
+            document.getElementById('word-cn').value = word.cn;
+            document.getElementById('word-level').value = word.level;
+            document.getElementById('word-example').value = word.example || '';
+            document.getElementById('word-modal').style.display = 'flex';
+        }
+
+        function closeWordModal() {
+            document.getElementById('word-modal').style.display = 'none';
+        }
+
+        function saveWord() {
+            const en = document.getElementById('word-en').value.trim().toLowerCase();
+            const cn = document.getElementById('word-cn').value.trim();
+            const level = parseInt(document.getElementById('word-level').value, 10);
+            const example = document.getElementById('word-example').value.trim();
+            const indexVal = document.getElementById('edit-index').value;
+
+            if (!en || !cn) {
+                alert('请填写完整的英文单词和中文翻译！');
+                return;
+            }
+
+            const wordData = { en, cn, level, example };
+
+            if (indexVal === '') {
+                // 新增
+                currentWordsList.push(wordData);
+            } else {
+                // 编辑
+                const index = parseInt(indexVal, 10);
+                currentWordsList[index] = wordData;
+            }
+
+            saveAndRefresh();
+            closeWordModal();
+        }
+
+        // 导出 JSON 词库为文件
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ words: currentWordsList }, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "words.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // 导入 JSON 词库
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed && Array.isArray(parsed.words)) {
+                        currentWordsList = parsed.words;
+                        saveAndRefresh();
+                        alert('词库导入成功，共加载了 ' + parsed.words.length + ' 个单词！');
+                    } else {
+                        alert('JSON 格式不正确，需要包含 "words" 数组！');
+                    }
+                } catch(err) {
+                    alert('读取文件出错，请确保是标准的 JSON 文件！');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // 拖拽与文件选择 PDF 解析
+        function setupDragAndDrop() {
+            const zone = document.getElementById('drop-zone');
+            
+            window.addEventListener('dragover', e => e.preventDefault());
+            window.addEventListener('drop', e => e.preventDefault());
+
+            zone.addEventListener('dragover', () => zone.classList.add('dragover'));
+            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+            zone.addEventListener('drop', (e) => {
+                zone.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file && file.type === "application/pdf") {
+                    parsePDF(file);
+                } else {
+                    alert('仅支持拖拽上传 PDF 格式文件！');
+                }
+            });
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                parsePDF(file);
+            }
+        }
+
+        // Mozilla pdf.js 前端解析 PDF
+        function parsePDF(file) {
+            document.getElementById('drop-zone').querySelector('p').innerHTML = "正在读取 PDF 文字中，请稍候... ⏳";
+            const fileReader = new FileReader();
+            
+            fileReader.onload = function() {
+                const typedarray = new Uint8Array(this.result);
+                
+                pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+                    const totalPages = pdf.numPages;
+                    let textPromises = [];
+                    
+                    for (let i = 1; i <= totalPages; i++) {
+                        textPromises.push(
+                            pdf.getPage(i).then(page => {
+                                return page.getTextContent().then(content => {
+                                    return content.items.map(item => item.str).join(' ');
+                                });
+                            })
+                        );
+                    }
+                    
+                    Promise.all(textPromises).then(pagesText => {
+                        const fullText = pagesText.join('\n');
+                        document.getElementById('raw-text').value = fullText;
+                        document.getElementById('drop-zone').querySelector('p').innerHTML = "PDF 读取成功！✅ 已自动填入下方文本域";
+                        extractFromText();
+                    }).catch(err => {
+                        console.error(err);
+                        alert('PDF 文字提取失败，您可手动复制文本至文本域中提取。');
+                        resetUploadArea();
+                    });
+                    
+                }).catch(err => {
+                    console.error(err);
+                    alert('PDF 加载失败，文件可能已损坏或受到保护。');
+                    resetUploadArea();
+                });
+            };
+            fileReader.readAsArrayBuffer(file);
+        }
+
+        function resetUploadArea() {
+            document.getElementById('drop-zone').querySelector('p').innerHTML = "点击选择或将 <strong>PDF 英文教程</strong> 拖拽到这里";
+        }
+
+        // 核心：基于小学/初中词汇规则提取文本中的英文单词
+        async function extractFromText() {
+            const text = document.getElementById('raw-text').value;
+            if (!text.trim()) {
+                alert('请粘贴英文内容或选择 PDF 文件后进行提取！');
+                return;
+            }
+
+            // 使用正则把文本中所有的英文单词剥离出来
+            const regex = /[a-zA-Z]+/g;
+            let match;
+            const uniqueWords = new Set();
+            
+            while ((match = regex.exec(text)) !== null) {
+                const word = match[0].toLowerCase();
+                // 排除 1 个或 2 个字母的超短无意义词（除了 as, go, to 等，可以直接做基础长度限制）
+                if (word.length >= 3) {
+                    uniqueWords.add(word);
+                }
+            }
+
+            if (uniqueWords.size === 0) {
+                alert('未从文本中提取到任何有效的英文单词！');
+                return;
+            }
+
+            // 获取选定的级别
+            const level = parseInt(document.getElementById('extract-level').value, 10);
+            
+            // 为了做高精度的过滤，我们可以列出一个“常见极简词”黑名单，剔除 basic helper verbs/pronouns
+            const filterOut = new Set([
+                "the", "and", "you", "that", "was", "for", "are", "with", "his", "they", "this",
+                "have", "from", "one", "had", "word", "but", "not", "what", "all", "were", "when",
+                "your", "can", "said", "there", "use", "an", "each", "which", "she", "do", "how",
+                "their", "if", "will", "up", "other", "about", "out", "many", "then", "them", "these",
+                "so", "some", "her", "would", "make", "like", "him", "into", "time", "has", "look",
+                "two", "more", "write", "go", "see", "number", "no", "way", "could", "people", "my",
+                "than", "first", "been", "call", "who", "its", "now", "find", "long", "down", "day",
+                "did", "get", "come", "made", "may", "part"
+            ]);
+
+            previewWords = [];
+            const wordList = Array.from(uniqueWords).filter(w => !filterOut.has(w));
+            
+            // 限制最多一次预览 40 个单词，防止海量渲染卡死
+            const slicedList = wordList.slice(0, 40);
+            
+            document.getElementById('extraction-preview-section').style.display = 'block';
+            const container = document.getElementById('preview-rows-container');
+            container.innerHTML = '正在加载释义中...';
+
+            for (let word of slicedList) {
+                // 1. 先查本地内置字典
+                let cn = commonDict[word] || '';
+                
+                // 2. 如果本地字典没有，通过 MyMemory 翻译 API 获取（它支持 CORS，完全免费）
+                if (!cn) {
+                    try {
+                        let response = await fetch(`https://api.mymemory.translated.net/get?q=${word}&langpair=en|zh-CN`);
+                        let data = await response.json();
+                        if (data && data.responseData && data.responseData.translatedText) {
+                            let trans = data.responseData.translatedText;
+                            // 过滤掉拼音或乱码，去除首尾符号
+                            if (!/[a-zA-Z]/.test(trans)) {
+                                cn = trans;
+                            }
+                        }
+                    } catch(e) {
+                        // 离线或翻译失败
+                    }
+                }
+                
+                // 3. 还是没有，就留空由用户双击编辑
+                if (!cn) {
+                    cn = "双击输入翻译";
+                }
+
+                previewWords.push({ en: word, cn: cn, level: level, example: `This is a ${word}.` });
+            }
+
+            renderPreviewList();
+        }
+
+        function renderPreviewList() {
+            const container = document.getElementById('preview-rows-container');
+            container.innerHTML = '';
+            
+            if (previewWords.length === 0) {
+                container.innerHTML = '<div style="padding:15px; color:var(--text-muted)">没有检测到符合条件的单词。</div>';
+                return;
+            }
+
+            previewWords.forEach((word, index) => {
+                const row = document.createElement('div');
+                row.className = 'preview-row';
+                const levelText = word.level === 1 ? '小学' : '初中';
+
+                row.innerHTML = `
+                    <div style="font-weight:700;">${word.en}</div>
+                    <div>
+                        <input type="text" value="${word.cn}" onchange="updatePreviewCn(${index}, this.value)">
+                    </div>
+                    <div>${levelText}</div>
+                    <div>
+                        <button class="icon-btn" style="color:var(--danger-color);" onclick="removePreviewWord(${index})">移除</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updatePreviewCn(index, newVal) {
+            previewWords[index].cn = newVal;
+        }
+
+        function removePreviewWord(index) {
+            previewWords.splice(index, 1);
+            renderPreviewList();
+        }
+
+        function cancelPreview() {
+            previewWords = [];
+            document.getElementById('extraction-preview-section').style.display = 'none';
+            resetUploadArea();
+        }
+
+        // 把提取到的单词合并入游戏词库中
+        function addAllSelectedWords() {
+            if (previewWords.length === 0) return;
+
+            let addedCount = 0;
+            previewWords.forEach(word => {
+                // 查重：避免添加重复单词
+                if (word.cn && word.cn !== '双击输入翻译') {
+                    const exists = currentWordsList.some(item => item.en === word.en);
+                    if (!exists) {
+                        currentWordsList.push(word);
+                        addedCount++;
+                    }
+                }
+            });
+
+            saveAndRefresh();
+            alert(`成功导入了 ${addedCount} 个新单词到游戏词库！`);
+            cancelPreview();
+        }
+    </script>
+</body>
+</html>

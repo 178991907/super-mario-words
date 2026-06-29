@@ -117,6 +117,24 @@ function setDataDisplay() {
   for (var n in (body.appendChild(e), (data.display = e), t))
     (e.appendChild(data[t[n]].element), updateDataElement(data[t[n]]));
   (body.appendChild(data.display), is_mobile && applyNewJs());
+
+  // 关键优化：在body下创建一个用于承载左下角学词滚动通知栏的容器
+  if (!document.getElementById("word-log-container")) {
+    var logContainer = createElement("div", {
+      id: "word-log-container",
+      style: {
+        position: "absolute",
+        left: "20px",
+        bottom: "60px",
+        zIndex: "99999",
+        display: "flex",
+        flexDirection: "column-reverse",
+        gap: "10px",
+        pointerEvents: "none"
+      }
+    });
+    body.appendChild(logContainer);
+  }
 }
 function clearDataDisplay() {
   body.removeChild(data_display);
@@ -135,7 +153,7 @@ function updateDataTime(e) {
   (1 != e.dir &&
     (100 == e.amount
       ? playCurrentThemeHurry()
-      : e.amount <= 0 && killPlayer(player, !0)),
+      : !notime && e.amount <= 0 && killPlayer(player, !0)),
     notime || ((map.time = e.amount += e.dir), updateDataElement(e)));
 }
 function updateDataElement(e) {
@@ -162,110 +180,95 @@ function score(e, t, n) {
         word = window.WordSystem.getRandomWord();
       }
       
-      // 弹出卡片时暂停游戏，避免玩家看单词时被怪撞死，同时也暂停倒计时
-      pause(false);
+      // 1. 头上保留原汁原味的小飘字反馈 (在原砖块/怪物上方上浮，0.8秒后淡出)
+      var scoreText = addText(t, e.left, e.top);
+      scoreText.yvel = -unitsized4;
+      TimeHandler.addEvent(killScore, 49, scoreText);
       
-      // 采用更美观、具备交互按钮的 Glassmorphism 卡片设计
-      var popupText = 
-        "<div class='word-card' style='" +
-        "  background: rgba(15, 23, 42, 0.95); " +
-        "  border: 2px solid #ef4444; " + 
-        "  border-radius: 12px; " +
-        "  padding: 12px 18px; " +
-        "  box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 12px rgba(239,68,68,0.4); " +
-        "  text-align: center; " +
-        "  pointer-events: auto; " +
-        "  display: inline-block; " +
-        "  min-width: 160px; " +
-        "  user-select: none; " +
-        "  position: relative; " +
-        "  z-index: 9999; " +
-        "'>" + 
-        "  <div class='word-sound-area' style='cursor: pointer; padding: 2px 0;' title='点击听发音'>" +
-        "    <div class='word-en' style='font-family: \"Press Start\", sans-serif; font-size: 16px; color: #ffffff; margin-bottom: 5px; text-shadow: 1px 1px 2px black;'>" + word.en.toUpperCase() + "</div>" + 
-        "    <div class='word-cn' style='font-family: sans-serif; font-size: 13px; color: #a3e635; font-weight: bold; text-shadow: 1px 1px 2px black;'>" + word.cn + "</div>" +
-        "    <div class='word-audio-tip' style='font-size: 9px; color: #94a3b8; margin-top: 5px; font-family: sans-serif; font-weight: normal; letter-spacing: 0;'>点击听发音 🔊</div>" +
-        "  </div>" +
-        "  <div style='height: 1px; background: rgba(255,255,255,0.1); margin: 8px 0;'></div>" +
-        "  <div class='btn-continue' style='" +
-        "    background: linear-gradient(135deg, #10b981, #059669); " +
-        "    color: white; " +
-        "    font-family: sans-serif; " +
-        "    font-size: 11px; " +
-        "    font-weight: bold; " +
-        "    padding: 5px 12px; " +
-        "    border-radius: 5px; " +
-        "    cursor: pointer; " +
-        "    box-shadow: 0 2px 6px rgba(16,185,129,0.3); " +
-        "    display: inline-block; " +
-        "  '>继续冒险 ➔</div>" +
-        "</div>";
-        
-      // 弹出卡片，微调坐标，使卡片相对马里奥顶起的位置左右居中
-      var x = addText(popupText, e.left - 50, e.top - 25);
-      x.style.pointerEvents = "auto";
-      x.style.zIndex = "9999";
-      
-      // 游戏处于暂停状态，所以将浮动速度设为 0，静止展示
-      x.yvel = 0;
-      
-      // 利用闭包及延迟绑定，捕获卡片的点击朗读和发音暂停机制
-      setTimeout(function() {
-        var domCard = x.querySelector('.word-card');
-        if (domCard) {
-          var soundArea = domCard.querySelector('.word-sound-area');
-          var btnContinue = domCard.querySelector('.btn-continue');
-          
-          if (soundArea) {
-            soundArea.onclick = function(clickEvent) {
-              if (clickEvent) clickEvent.stopPropagation();
-              
-              soundArea.style.transform = "scale(1.1)";
-              setTimeout(function() { soundArea.style.transform = "scale(1)"; }, 150);
-              
-              var audioTip = domCard.querySelector('.word-audio-tip');
-              if (audioTip) {
-                audioTip.innerText = "正在发音... 🔊";
-                audioTip.style.color = "#f59e0b";
-              }
-              
-              // 浏览器 Web Speech TTS 自动朗读发音
-              try {
-                if ('speechSynthesis' in window) {
-                  window.speechSynthesis.cancel();
-                  var utterance = new SpeechSynthesisUtterance(word.en);
-                  utterance.lang = 'en-US';
-                  utterance.rate = 0.8; // 0.8倍慢速发音
-                  utterance.onend = function() {
-                    if (audioTip) {
-                      audioTip.innerText = "点击听发音 🔊";
-                      audioTip.style.color = "#94a3b8";
-                    }
-                  };
-                  window.speechSynthesis.speak(utterance);
-                }
-              } catch(err) {
-                console.error('Text-to-speech error:', err);
-              }
-            };
+      // 2. 向左下角滚动通知容器中插入全新卡片条目
+      var logContainer = document.getElementById("word-log-container");
+      if (logContainer) {
+        var item = createElement("div", {
+          className: "word-log-item",
+          style: {
+            background: "rgba(15, 23, 42, 0.95)",
+            borderLeft: "4px solid #ef4444",
+            borderRadius: "6px",
+            padding: "6px 12px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            transform: "translateX(-120%)",
+            opacity: "0",
+            transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+            pointerEvents: "auto",
+            cursor: "pointer",
+            minWidth: "140px",
+            maxWidth: "200px",
+            userSelect: "none"
           }
+        });
+        
+        item.innerHTML = 
+          "  <div style='flex: 1; min-width: 0;'>" +
+          "    <div style='font-family: \"Press Start 2P\", sans-serif; font-size: 10px; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>" + word.en.toUpperCase() + "</div>" +
+          "    <div style='font-family: sans-serif; font-size: 11px; color: #a3e635; font-weight: bold; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>" + word.cn + "</div>" +
+          "  </div>" +
+          "  <div style='font-size: 12px; color: #94a3b8; padding-left: 6px;'>🔊</div>";
           
-          if (btnContinue) {
-            btnContinue.onclick = function(clickEvent) {
-              if (clickEvent) clickEvent.stopPropagation();
-              
-              // 销毁卡片并恢复游戏
-              killScore(x);
-              unpause();
-              
-              // 关键修复：给马里奥加上 1.75 秒的闪烁无敌保护时间，避免恢复瞬间被怪物碰触瞬杀
-              if (window.player) {
-                flicker(player, 35, 3);
+        logContainer.appendChild(item);
+        
+        // 触发滑入动画
+        setTimeout(function() {
+          item.style.transform = "translateX(0)";
+          item.style.opacity = "1";
+        }, 10);
+        
+        // 绑定点击听发音事件
+        item.onclick = function(clickEvent) {
+          if (clickEvent) clickEvent.stopPropagation();
+          try {
+            if ('speechSynthesis' in window) {
+              window.speechSynthesis.cancel();
+              var utterance = new SpeechSynthesisUtterance(word.en);
+              utterance.lang = 'en-US';
+              utterance.rate = 0.8; // 0.8倍慢速发音，最方便模仿跟读
+              window.speechSynthesis.speak(utterance);
+            }
+          } catch(err) {
+            console.error('Text-to-speech error:', err);
+          }
+        };
+        
+        // 5秒后向左滑出并销毁
+        var removeTimer = setTimeout(function() {
+          if (item && item.parentNode) {
+            item.style.transform = "translateX(-120%)";
+            item.style.opacity = "0";
+            setTimeout(function() {
+              if (item && item.parentNode) {
+                logContainer.removeChild(item);
               }
-            };
+            }, 350);
+          }
+        }, 5000);
+        
+        // 如果通知栏子项数量超过 4 个，则提前滑出并清理最老的项
+        var children = logContainer.children;
+        if (children.length > 4) {
+          var oldest = children[0];
+          if (oldest) {
+            oldest.style.transform = "translateX(-120%)";
+            oldest.style.opacity = "0";
+            setTimeout(function() {
+              if (oldest && oldest.parentNode) {
+                logContainer.removeChild(oldest);
+              }
+            }, 350);
           }
         }
-      }, 50);
+      }
     }
     
     // 兼容生命逻辑：每 50 个 WORDS 奖励加一条生命

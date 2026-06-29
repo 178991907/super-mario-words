@@ -128,7 +128,8 @@ function toggleLuigi() {
     setThingSprite(window.player));
 }
 function startDataTime() {
-  TimeHandler.addEventInterval(updateDataTime, 25, 1 / 0, data.time);
+  // 将时间递减的触发频率从每 25 帧改为每 60 帧，与现实中的 1 秒对齐
+  TimeHandler.addEventInterval(updateDataTime, 60, 1 / 0, data.time);
 }
 function updateDataTime(e) {
   (1 != e.dir &&
@@ -161,6 +162,9 @@ function score(e, t, n) {
         word = window.WordSystem.getRandomWord();
       }
       
+      // 弹出卡片时暂停游戏，避免玩家看单词时被怪撞死，同时也暂停倒计时
+      pause(false);
+      
       // 1. 采用大字号、极度清晰的 Glassmorphism 卡片设计
       // pointer-events: auto 保证可以捕捉点击事件
       var popupText = 
@@ -191,11 +195,14 @@ function score(e, t, n) {
       x.style.pointerEvents = "auto";
       x.style.zIndex = "9999";
       
-      // 2. 超低上浮速度 (比如 -0.1)，几乎保持在砖块上方浮动，最利于小学生看清
+      // 2. 超低上浮速度 (因为游戏暂停了，这里的速度主要在恢复时生效，或者直接保持低速)
       x.yvel = -0.12 * unitsize;
       
-      // 3. 初始定时销毁句柄（延长展示时间，默认在空中浮动约 3.3 秒）
-      var cleanupEvent = TimeHandler.addEvent(killScore, 200, x);
+      // 3. 初始定时销毁句柄（使用浏览器的 setTimeout，默认在 3.3 秒后清理卡片并恢复游戏运行）
+      var cleanupTimeout = setTimeout(function() {
+        killScore(x);
+        unpause();
+      }, 3300);
       
       // 4. 利用闭包及延迟绑定，捕获卡片的点击朗读和发音暂停机制
       setTimeout(function() {
@@ -219,8 +226,8 @@ function score(e, t, n) {
             // 停滞物理上升速度，完全静止悬浮在空中
             x.yvel = 0;
             
-            // 撤销原本的定时销毁，避免发音还没听完就消失
-            TimeHandler.clearEvent(cleanupEvent);
+            // 撤销原本的定时销毁，使用 clearTimeout 避免发音还没听完就消失
+            clearTimeout(cleanupTimeout);
             
             // 浏览器 Web Speech TTS 自动朗读发音
             try {
@@ -228,15 +235,18 @@ function score(e, t, n) {
                 window.speechSynthesis.cancel(); // 停止上一段可能正在播的单词
                 var utterance = new SpeechSynthesisUtterance(word.en);
                 utterance.lang = 'en-US';
-                utterance.rate = 0.8; // 0.8倍慢速发音，发音清晰沉稳，最方便小学生模仿跟读
+                utterance.rate = 0.8; // 0.8倍慢速发音，最方便模仿跟读
                 window.speechSynthesis.speak(utterance);
               }
             } catch(e) {
               console.error('Text-to-speech error:', e);
             }
             
-            // 朗读之后，重新追加 180帧 (约 3 秒) 展示生命值，确保朗读完后依然有时间观摩
-            cleanupEvent = TimeHandler.addEvent(killScore, 180, x);
+            // 朗读之后，重新追加 3 秒展示时间，确保朗读完后依然有时间观摩，到期后再恢复游戏
+            cleanupTimeout = setTimeout(function() {
+              killScore(x);
+              unpause();
+            }, 3000);
           };
         }
       }, 50);

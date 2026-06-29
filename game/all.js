@@ -165,29 +165,40 @@ function score(e, t, n) {
       // 弹出卡片时暂停游戏，避免玩家看单词时被怪撞死，同时也暂停倒计时
       pause(false);
       
-      // 1. 采用大字号、极度清晰的 Glassmorphism 卡片设计
-      // pointer-events: auto 保证可以捕捉点击事件
+      // 采用更美观、具备交互按钮的 Glassmorphism 卡片设计
       var popupText = 
         "<div class='word-card' style='" +
         "  background: rgba(15, 23, 42, 0.95); " +
         "  border: 2px solid #ef4444; " + 
-        "  border-radius: 8px; " +
-        "  padding: 8px 14px; " +
-        "  box-shadow: 0 4px 15px rgba(0,0,0,0.6), 0 0 8px rgba(239,68,68,0.4); " +
+        "  border-radius: 12px; " +
+        "  padding: 12px 18px; " +
+        "  box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 12px rgba(239,68,68,0.4); " +
         "  text-align: center; " +
-        "  cursor: pointer; " +
         "  pointer-events: auto; " +
-        "  transition: transform 0.2s ease, border-color 0.2s, background-color 0.2s; " +
         "  display: inline-block; " +
-        "  min-width: 130px; " +
-        "  white-space: nowrap; " +
+        "  min-width: 160px; " +
         "  user-select: none; " +
         "  position: relative; " +
         "  z-index: 9999; " +
         "'>" + 
-        "  <div class='word-en' style='font-family: \"Press Start\", sans-serif; font-size: 16px; color: #ffffff; margin-bottom: 5px; text-shadow: 1px 1px 2px black;'>" + word.en.toUpperCase() + "</div>" + 
-        "  <div class='word-cn' style='font-family: sans-serif; font-size: 13px; color: #a3e635; font-weight: bold; text-shadow: 1px 1px 2px black;'>" + word.cn + "</div>" +
-        "  <div class='word-audio-tip' style='font-size: 9px; color: #94a3b8; margin-top: 5px; font-family: sans-serif; font-weight: normal; letter-spacing: 0;'>点击发音 🔊</div>" +
+        "  <div class='word-sound-area' style='cursor: pointer; padding: 2px 0;' title='点击听发音'>" +
+        "    <div class='word-en' style='font-family: \"Press Start\", sans-serif; font-size: 16px; color: #ffffff; margin-bottom: 5px; text-shadow: 1px 1px 2px black;'>" + word.en.toUpperCase() + "</div>" + 
+        "    <div class='word-cn' style='font-family: sans-serif; font-size: 13px; color: #a3e635; font-weight: bold; text-shadow: 1px 1px 2px black;'>" + word.cn + "</div>" +
+        "    <div class='word-audio-tip' style='font-size: 9px; color: #94a3b8; margin-top: 5px; font-family: sans-serif; font-weight: normal; letter-spacing: 0;'>点击听发音 🔊</div>" +
+        "  </div>" +
+        "  <div style='height: 1px; background: rgba(255,255,255,0.1); margin: 8px 0;'></div>" +
+        "  <div class='btn-continue' style='" +
+        "    background: linear-gradient(135deg, #10b981, #059669); " +
+        "    color: white; " +
+        "    font-family: sans-serif; " +
+        "    font-size: 11px; " +
+        "    font-weight: bold; " +
+        "    padding: 5px 12px; " +
+        "    border-radius: 5px; " +
+        "    cursor: pointer; " +
+        "    box-shadow: 0 2px 6px rgba(16,185,129,0.3); " +
+        "    display: inline-block; " +
+        "  '>继续冒险 ➔</div>" +
         "</div>";
         
       // 弹出卡片，微调坐标，使卡片相对马里奥顶起的位置左右居中
@@ -195,59 +206,64 @@ function score(e, t, n) {
       x.style.pointerEvents = "auto";
       x.style.zIndex = "9999";
       
-      // 2. 超低上浮速度 (因为游戏暂停了，这里的速度主要在恢复时生效，或者直接保持低速)
-      x.yvel = -0.12 * unitsize;
+      // 游戏处于暂停状态，所以将浮动速度设为 0，静止展示
+      x.yvel = 0;
       
-      // 3. 初始定时销毁句柄（使用浏览器的 setTimeout，默认在 3.3 秒后清理卡片并恢复游戏运行）
-      var cleanupTimeout = setTimeout(function() {
-        killScore(x);
-        unpause();
-      }, 3300);
-      
-      // 4. 利用闭包及延迟绑定，捕获卡片的点击朗读和发音暂停机制
+      // 利用闭包及延迟绑定，捕获卡片的点击朗读和发音暂停机制
       setTimeout(function() {
         var domCard = x.querySelector('.word-card');
         if (domCard) {
-          domCard.onclick = function(clickEvent) {
-            // 阻止事件冒泡以避免触发游戏的其它点击暂停行为
-            if (clickEvent) clickEvent.stopPropagation();
-            
-            // 卡片变大 1.25 倍，边框颜色高亮变成无敌星黄色 (#f59e0b)
-            domCard.style.transform = "scale(1.25)";
-            domCard.style.borderColor = "#f59e0b";
-            domCard.style.boxShadow = "0 6px 20px rgba(0,0,0,0.7), 0 0 12px rgba(245,158,11,0.6)";
-            
-            var audioTip = domCard.querySelector('.word-audio-tip');
-            if (audioTip) {
-              audioTip.innerText = "正在发音... 🔊";
-              audioTip.style.color = "#f59e0b";
-            }
-            
-            // 停滞物理上升速度，完全静止悬浮在空中
-            x.yvel = 0;
-            
-            // 撤销原本的定时销毁，使用 clearTimeout 避免发音还没听完就消失
-            clearTimeout(cleanupTimeout);
-            
-            // 浏览器 Web Speech TTS 自动朗读发音
-            try {
-              if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // 停止上一段可能正在播的单词
-                var utterance = new SpeechSynthesisUtterance(word.en);
-                utterance.lang = 'en-US';
-                utterance.rate = 0.8; // 0.8倍慢速发音，最方便模仿跟读
-                window.speechSynthesis.speak(utterance);
+          var soundArea = domCard.querySelector('.word-sound-area');
+          var btnContinue = domCard.querySelector('.btn-continue');
+          
+          if (soundArea) {
+            soundArea.onclick = function(clickEvent) {
+              if (clickEvent) clickEvent.stopPropagation();
+              
+              soundArea.style.transform = "scale(1.1)";
+              setTimeout(function() { soundArea.style.transform = "scale(1)"; }, 150);
+              
+              var audioTip = domCard.querySelector('.word-audio-tip');
+              if (audioTip) {
+                audioTip.innerText = "正在发音... 🔊";
+                audioTip.style.color = "#f59e0b";
               }
-            } catch(e) {
-              console.error('Text-to-speech error:', e);
-            }
-            
-            // 朗读之后，重新追加 3 秒展示时间，确保朗读完后依然有时间观摩，到期后再恢复游戏
-            cleanupTimeout = setTimeout(function() {
+              
+              // 浏览器 Web Speech TTS 自动朗读发音
+              try {
+                if ('speechSynthesis' in window) {
+                  window.speechSynthesis.cancel();
+                  var utterance = new SpeechSynthesisUtterance(word.en);
+                  utterance.lang = 'en-US';
+                  utterance.rate = 0.8; // 0.8倍慢速发音
+                  utterance.onend = function() {
+                    if (audioTip) {
+                      audioTip.innerText = "点击听发音 🔊";
+                      audioTip.style.color = "#94a3b8";
+                    }
+                  };
+                  window.speechSynthesis.speak(utterance);
+                }
+              } catch(err) {
+                console.error('Text-to-speech error:', err);
+              }
+            };
+          }
+          
+          if (btnContinue) {
+            btnContinue.onclick = function(clickEvent) {
+              if (clickEvent) clickEvent.stopPropagation();
+              
+              // 销毁卡片并恢复游戏
               killScore(x);
               unpause();
-            }, 3000);
-          };
+              
+              // 关键修复：给马里奥加上 1.75 秒的闪烁无敌保护时间，避免恢复瞬间被怪物碰触瞬杀
+              if (window.player) {
+                flicker(player, 35, 3);
+              }
+            };
+          }
         }
       }, 50);
     }

@@ -118,10 +118,10 @@ function setDataDisplay() {
     (e.appendChild(data[t[n]].element), updateDataElement(data[t[n]]));
   (body.appendChild(data.display), is_mobile && applyNewJs());
 
-  // 关键优化：在body下创建一个用于承载左下角学词滚动通知栏的容器，改用 cssText 绕开原型链属性复制冲突
+  // 关键优化：在body下创建一个用于承载左下角学词滚动通知栏的容器，改用 cssText 绕开原型链属性复制冲突，使用标准的 flex-direction 短横线属性
   if (!document.getElementById("word-log-container")) {
     var logContainer = createElement("div", { id: "word-log-container" });
-    logContainer.style.cssText = "position: absolute; left: 20px; bottom: 60px; z-index: 99999; display: flex; flexDirection: column-reverse; gap: 10px; pointer-events: none;";
+    logContainer.style.cssText = "position: absolute; left: 20px; bottom: 60px; z-index: 99999; display: flex; flex-direction: column-reverse; gap: 10px; pointer-events: none;";
     body.appendChild(logContainer);
   }
 }

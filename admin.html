@@ -815,18 +815,30 @@
             const lines = text.split('\n');
             const universalRegex = /(?:\*?\s*)?([a-zA-Z][a-zA-Z\s\-']*?)\s+(?:\/[^\/]+\/\s*)?([\u4e00-\u9fff\uff08（][\u4e00-\u9fff\uff0c\uff1b\uff08\uff09\u3001\u3002\uff1a（）；，：a-zA-Z0-9\s\-\.\u2026]*?)(?=\s*(?:\*?[a-zA-Z]{2,})|\s*p\.?\s*\d+|$)/g;
             
+            // 过滤掉常见的 PDF 页眉、页脚、网址、说明文字等干扰项
+            const blacklist = new Set([
+                'useful expressions', 'cn', 'com', 'pep', 'www', 'http', 'https',
+                'vocabulary', 'words in each unit', 'appendix', 'notes', 'email'
+            ]);
+            
             for (let line of lines) {
                 let match;
                 while ((match = universalRegex.exec(line)) !== null) {
                     let enWord = match[1].trim().toLowerCase();
                     // 忽略 A, B, C 等单个字母的章节表头
                     if (enWord.length < 2) continue;
+                    // 过滤掉已知的非单词干扰项
+                    if (blacklist.has(enWord)) continue;
                     
                     let cnMeaning = match[2].trim();
                     // 清理末尾可能粘连的页码
                     cnMeaning = cnMeaning.replace(/\s*p\.?\s*\d+\s*$/, '').trim();
                     // 清理末尾多余标点符号
                     cnMeaning = cnMeaning.replace(/[；;，,\s]+$/, '').trim();
+                    // 清理中文之间被排版强行加入的空格（例如 "常 用 表 达 法" -> "常用表达法"）
+                    while (/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/.test(cnMeaning)) {
+                        cnMeaning = cnMeaning.replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2');
+                    }
                     
                     if (!seenWords.has(enWord)) {
                         seenWords.add(enWord);

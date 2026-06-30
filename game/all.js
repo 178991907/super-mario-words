@@ -177,26 +177,38 @@ function score(e, t, n) {
       var newLeft = e.left - 20; // 默认稍微向左偏移居中
       var newTop = e.top;
       
-      // 防止多卡片重叠检测逻辑
+      // 防止多卡片重叠检测逻辑（螺旋寻找空位算法）
       var overlap = true;
       var attempts = 0;
-      while (overlap && attempts < 8) {
+      var radius = 0;
+      var angle = 0;
+      var cx = newLeft;
+      var cy = newTop;
+      
+      while (overlap && attempts < 100) {
         overlap = false;
         for (var i = 0; i < texts.length; ++i) {
           var t = texts[i];
+          // 仅对带有朗读功能的单词卡片进行避让
           if (t.innerHTML && t.innerHTML.indexOf("SpeechSynthesisUtterance") !== -1) {
             var dx = Math.abs(t.left - newLeft);
             var dy = Math.abs(t.top - newTop);
-            // 如果两张卡片距离过近（卡片大概宽120，高90）
-            if (dx < 120 && dy < 90) {
+            // 卡片大概宽150，高100
+            if (dx < 150 && dy < 95) {
               overlap = true;
-              newTop -= 95; // 向上避让
-              newLeft += (Math.random() > 0.5 ? 15 : -15); // 稍微左右错开
               break;
             }
           }
         }
-        attempts++;
+        
+        if (overlap) {
+          radius += 10;
+          angle += 2.0; // 黄金角度近似值，保证散开均匀
+          // 横向散开幅度大一些，纵向小一些
+          newLeft = cx + Math.cos(angle) * radius * 1.5;
+          newTop = cy + Math.sin(angle) * (radius * 0.6);
+          attempts++;
+        }
       }
         
       var x = addText(wordHtml, newLeft, newTop);

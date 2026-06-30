@@ -118,21 +118,10 @@ function setDataDisplay() {
     (e.appendChild(data[t[n]].element), updateDataElement(data[t[n]]));
   (body.appendChild(data.display), is_mobile && applyNewJs());
 
-  // 关键优化：在body下创建一个用于承载左下角学词滚动通知栏的容器
+  // 关键优化：在body下创建一个用于承载左下角学词滚动通知栏的容器，改用 cssText 绕开原型链属性复制冲突
   if (!document.getElementById("word-log-container")) {
-    var logContainer = createElement("div", {
-      id: "word-log-container",
-      style: {
-        position: "absolute",
-        left: "20px",
-        bottom: "60px",
-        zIndex: "99999",
-        display: "flex",
-        flexDirection: "column-reverse",
-        gap: "10px",
-        pointerEvents: "none"
-      }
-    });
+    var logContainer = createElement("div", { id: "word-log-container" });
+    logContainer.style.cssText = "position: absolute; left: 20px; bottom: 60px; z-index: 99999; display: flex; flexDirection: column-reverse; gap: 10px; pointer-events: none;";
     body.appendChild(logContainer);
   }
 }
@@ -172,12 +161,20 @@ function score(e, t, n) {
     );
     
     if (n) {
-      // 默认备份单词
-      var word = { en: "Study", cn: "学习" };
-      if (window.parent && window.parent.WordSystem && typeof window.parent.WordSystem.getRandomWord === "function") {
-        word = window.parent.WordSystem.getRandomWord();
-      } else if (window.WordSystem && typeof window.WordSystem.getRandomWord === "function") {
-        word = window.WordSystem.getRandomWord();
+      // 默认备份及严格防空校验，确保 word 对象极其属性 en 和 cn 100% 存在，避免运行时报错
+      var word = null;
+      try {
+        if (window.parent && window.parent.WordSystem && typeof window.parent.WordSystem.getRandomWord === "function") {
+          word = window.parent.WordSystem.getRandomWord();
+        } else if (window.WordSystem && typeof window.WordSystem.getRandomWord === "function") {
+          word = window.WordSystem.getRandomWord();
+        }
+      } catch(err) {
+        console.error("Failed to get word:", err);
+      }
+      
+      if (!word || !word.en || !word.cn) {
+        word = { en: "Study", cn: "学习" };
       }
       
       // 1. 头上保留原汁原味的小飘字反馈 (在原砖块/怪物上方上浮，0.8秒后淡出)
@@ -188,27 +185,9 @@ function score(e, t, n) {
       // 2. 向左下角滚动通知容器中插入全新卡片条目
       var logContainer = document.getElementById("word-log-container");
       if (logContainer) {
-        var item = createElement("div", {
-          className: "word-log-item",
-          style: {
-            background: "rgba(15, 23, 42, 0.95)",
-            borderLeft: "4px solid #ef4444",
-            borderRadius: "6px",
-            padding: "6px 12px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            transform: "translateX(-120%)",
-            opacity: "0",
-            transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-            pointerEvents: "auto",
-            cursor: "pointer",
-            minWidth: "140px",
-            maxWidth: "200px",
-            userSelect: "none"
-          }
-        });
+        // 创建 DOM，移除 style 属性对象配置，改用 cssText 安全写入样式字符串避开属性冲突
+        var item = createElement("div", { className: "word-log-item" });
+        item.style.cssText = "background: rgba(15, 23, 42, 0.95); border-left: 4px solid #ef4444; border-radius: 6px; padding: 6px 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.6); display: flex; align-items: center; gap: 10px; transform: translateX(-120%); opacity: 0; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: auto; cursor: pointer; min-width: 140px; max-width: 200px; user-select: none;";
         
         item.innerHTML = 
           "  <div style='flex: 1; min-width: 0;'>" +

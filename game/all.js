@@ -167,16 +167,17 @@ function score(e, t, n) {
         word = { en: "Study", cn: "学习" };
       }
       
-      // 使用游戏原生 addText 渲染单词卡片（经过验证可在 Canvas 上层正确显示）
-      var wordHtml = "<div style='text-align:center; pointer-events:none;'>" +
-        "<div style='font-size:14px; color:#fff; text-shadow:1px 1px 3px #000, 0 0 6px rgba(239,68,68,0.6);'>" + word.en.toUpperCase() + "</div>" +
-        "<div style='font-size:11px; color:#a3e635; font-weight:bold; text-shadow:1px 1px 2px #000;'>" + word.cn + "</div>" +
+      // 使用游戏原生 addText 渲染带背景和点击朗读功能的大单词卡片
+      var safeWord = word.en.replace(/'/g, "\\'");
+      var wordHtml = "<div style='text-align:center; pointer-events:auto; cursor:pointer; background:rgba(255, 255, 255, 0.95); border:3px solid #3b82f6; border-radius:12px; padding:8px 16px; box-shadow:0 6px 12px rgba(0,0,0,0.4);' onclick=\"var msg=new SpeechSynthesisUtterance('" + safeWord + "'); msg.lang='en-US'; speechSynthesis.speak(msg);\">" +
+        "<div style='font-size:26px; font-weight:900; color:#1e3a8a; line-height:1.2; text-shadow:none;'>" + word.en + "</div>" +
+        "<div style='font-size:18px; font-weight:bold; color:#047857; line-height:1.2; text-shadow:none; margin-top:2px;'>" + word.cn + "</div>" +
         "</div>";
       var x = addText(wordHtml, e.left, e.top);
-      // 缓慢上浮，比原版的 "200" 飘字慢 3 倍，让玩家有充分时间看清
-      x.yvel = -unitsized4 * 0.35;
-      // 约 2.3 秒后自动销毁（140 帧 × ~16.7ms/帧）
-      TimeHandler.addEvent(killScore, 140, x);
+      // 缓慢上浮，让玩家有充分时间看清和点击
+      x.yvel = -unitsized4 * 0.2;
+      // 约 3 秒后自动销毁（180 帧 × ~16.7ms/帧）
+      TimeHandler.addEvent(killScore, 180, x);
     }
     
     // 兼容生命逻辑：每 50 个 WORDS 奖励加一条生命

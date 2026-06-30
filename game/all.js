@@ -167,13 +167,39 @@ function score(e, t, n) {
         word = { en: "Study", cn: "学习" };
       }
       
-      // 使用游戏原生 addText 渲染带背景和点击朗读功能的大单词卡片
       var safeWord = word.en.replace(/'/g, "\\'");
-      var wordHtml = "<div style='text-align:center; pointer-events:auto; cursor:pointer; background:rgba(255, 255, 255, 0.95); border:3px solid #3b82f6; border-radius:12px; padding:8px 16px; box-shadow:0 6px 12px rgba(0,0,0,0.4);' onclick=\"var msg=new SpeechSynthesisUtterance('" + safeWord + "'); msg.lang='en-US'; speechSynthesis.speak(msg);\">" +
+      var wordHtml = "<div style='text-align:center; pointer-events:auto; cursor:pointer; background:rgba(255, 255, 255, 0.95); border:3px solid #3b82f6; border-radius:12px; padding:8px 16px; box-shadow:0 6px 12px rgba(0,0,0,0.4); display:flex; flex-direction:column; align-items:center;' onclick=\"var msg=new SpeechSynthesisUtterance('" + safeWord + "'); msg.lang='en-US'; speechSynthesis.speak(msg);\">" +
         "<div style='font-size:26px; font-weight:900; color:#1e3a8a; line-height:1.2; text-shadow:none;'>" + word.en + "</div>" +
         "<div style='font-size:18px; font-weight:bold; color:#047857; line-height:1.2; text-shadow:none; margin-top:2px;'>" + word.cn + "</div>" +
+        "<div style='font-size:11px; color:#6b7280; margin-top:6px; font-weight:normal; text-shadow:none; background:#f3f4f6; padding:2px 6px; border-radius:4px;'>🔊 点击卡片读单词</div>" +
         "</div>";
-      var x = addText(wordHtml, e.left, e.top);
+        
+      var newLeft = e.left - 20; // 默认稍微向左偏移居中
+      var newTop = e.top;
+      
+      // 防止多卡片重叠检测逻辑
+      var overlap = true;
+      var attempts = 0;
+      while (overlap && attempts < 8) {
+        overlap = false;
+        for (var i = 0; i < texts.length; ++i) {
+          var t = texts[i];
+          if (t.innerHTML && t.innerHTML.indexOf("SpeechSynthesisUtterance") !== -1) {
+            var dx = Math.abs(t.left - newLeft);
+            var dy = Math.abs(t.top - newTop);
+            // 如果两张卡片距离过近（卡片大概宽120，高90）
+            if (dx < 120 && dy < 90) {
+              overlap = true;
+              newTop -= 95; // 向上避让
+              newLeft += (Math.random() > 0.5 ? 15 : -15); // 稍微左右错开
+              break;
+            }
+          }
+        }
+        attempts++;
+      }
+        
+      var x = addText(wordHtml, newLeft, newTop);
       // 缓慢上浮，让玩家有充分时间看清和点击
       x.yvel = -unitsized4 * 0.2;
       // 约 3 秒后自动销毁（180 帧 × ~16.7ms/帧）

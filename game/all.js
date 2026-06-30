@@ -117,13 +117,6 @@ function setDataDisplay() {
   for (var n in (body.appendChild(e), (data.display = e), t))
     (e.appendChild(data[t[n]].element), updateDataElement(data[t[n]]));
   (body.appendChild(data.display), is_mobile && applyNewJs());
-
-  // 关键优化：在body下创建一个用于承载左下角学词滚动通知栏的容器，改用 cssText 绕开原型链属性复制冲突，使用标准的 flex-direction 短横线属性
-  if (!document.getElementById("word-log-container")) {
-    var logContainer = createElement("div", { id: "word-log-container" });
-    logContainer.style.cssText = "position: absolute; left: 20px; bottom: 60px; z-index: 99999; display: flex; flex-direction: column-reverse; gap: 10px; pointer-events: none;";
-    body.appendChild(logContainer);
-  }
 }
 function clearDataDisplay() {
   body.removeChild(data_display);
@@ -161,7 +154,7 @@ function score(e, t, n) {
     );
     
     if (n) {
-      // 默认备份及严格防空校验，确保 word 对象极其属性 en 和 cn 100% 存在，避免运行时报错
+      // 严格防空校验获取随机单词
       var word = null;
       try {
         if (window.parent && window.parent.WordSystem && typeof window.parent.WordSystem.getRandomWord === "function") {
@@ -169,85 +162,21 @@ function score(e, t, n) {
         } else if (window.WordSystem && typeof window.WordSystem.getRandomWord === "function") {
           word = window.WordSystem.getRandomWord();
         }
-      } catch(err) {
-        console.error("Failed to get word:", err);
-      }
-      
+      } catch(err) {}
       if (!word || !word.en || !word.cn) {
         word = { en: "Study", cn: "学习" };
       }
       
-      // 1. 头上保留原汁原味的小飘字反馈 (在原砖块/怪物上方上浮，0.8秒后淡出)
-      var scoreText = addText(t, e.left, e.top);
-      scoreText.yvel = -unitsized4;
-      TimeHandler.addEvent(killScore, 49, scoreText);
-      
-      // 2. 向左下角滚动通知容器中插入全新卡片条目
-      var logContainer = document.getElementById("word-log-container");
-      if (logContainer) {
-        // 创建 DOM，移除 style 属性对象配置，改用 cssText 安全写入样式字符串避开属性冲突
-        var item = createElement("div", { className: "word-log-item" });
-        item.style.cssText = "background: rgba(15, 23, 42, 0.95); border-left: 4px solid #ef4444; border-radius: 6px; padding: 6px 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.6); display: flex; align-items: center; gap: 10px; transform: translateX(-120%); opacity: 0; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: auto; cursor: pointer; min-width: 140px; max-width: 200px; user-select: none;";
-        
-        item.innerHTML = 
-          "  <div style='flex: 1; min-width: 0;'>" +
-          "    <div style='font-family: \"Press Start 2P\", sans-serif; font-size: 10px; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>" + word.en.toUpperCase() + "</div>" +
-          "    <div style='font-family: sans-serif; font-size: 11px; color: #a3e635; font-weight: bold; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>" + word.cn + "</div>" +
-          "  </div>" +
-          "  <div style='font-size: 12px; color: #94a3b8; padding-left: 6px;'>🔊</div>";
-          
-        logContainer.appendChild(item);
-        
-        // 触发滑入动画
-        setTimeout(function() {
-          item.style.transform = "translateX(0)";
-          item.style.opacity = "1";
-        }, 10);
-        
-        // 绑定点击听发音事件
-        item.onclick = function(clickEvent) {
-          if (clickEvent) clickEvent.stopPropagation();
-          try {
-            if ('speechSynthesis' in window) {
-              window.speechSynthesis.cancel();
-              var utterance = new SpeechSynthesisUtterance(word.en);
-              utterance.lang = 'en-US';
-              utterance.rate = 0.8; // 0.8倍慢速发音，最方便模仿跟读
-              window.speechSynthesis.speak(utterance);
-            }
-          } catch(err) {
-            console.error('Text-to-speech error:', err);
-          }
-        };
-        
-        // 5秒后向左滑出并销毁
-        var removeTimer = setTimeout(function() {
-          if (item && item.parentNode) {
-            item.style.transform = "translateX(-120%)";
-            item.style.opacity = "0";
-            setTimeout(function() {
-              if (item && item.parentNode) {
-                logContainer.removeChild(item);
-              }
-            }, 350);
-          }
-        }, 5000);
-        
-        // 如果通知栏子项数量超过 4 个，则提前滑出并清理最老的项
-        var children = logContainer.children;
-        if (children.length > 4) {
-          var oldest = children[0];
-          if (oldest) {
-            oldest.style.transform = "translateX(-120%)";
-            oldest.style.opacity = "0";
-            setTimeout(function() {
-              if (oldest && oldest.parentNode) {
-                logContainer.removeChild(oldest);
-              }
-            }, 350);
-          }
-        }
-      }
+      // 使用游戏原生 addText 渲染单词卡片（经过验证可在 Canvas 上层正确显示）
+      var wordHtml = "<div style='text-align:center; pointer-events:none;'>" +
+        "<div style='font-size:14px; color:#fff; text-shadow:1px 1px 3px #000, 0 0 6px rgba(239,68,68,0.6);'>" + word.en.toUpperCase() + "</div>" +
+        "<div style='font-size:11px; color:#a3e635; font-weight:bold; text-shadow:1px 1px 2px #000;'>" + word.cn + "</div>" +
+        "</div>";
+      var x = addText(wordHtml, e.left, e.top);
+      // 缓慢上浮，比原版的 "200" 飘字慢 3 倍，让玩家有充分时间看清
+      x.yvel = -unitsized4 * 0.35;
+      // 约 2.3 秒后自动销毁（140 帧 × ~16.7ms/帧）
+      TimeHandler.addEvent(killScore, 140, x);
     }
     
     // 兼容生命逻辑：每 50 个 WORDS 奖励加一条生命

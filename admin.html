@@ -800,76 +800,95 @@
                 return;
             }
 
-            // 使用正则把文本中所有的英文单词剥离出来
-            const regex = /[a-zA-Z]+/g;
-            let match;
-            const uniqueWords = new Set();
-            
-            while ((match = regex.exec(text)) !== null) {
-                const word = match[0].toLowerCase();
-                // 排除 1 个或 2 个字母的超短无意义词（除了 as, go, to 等，可以直接做基础长度限制）
-                if (word.length >= 3) {
-                    uniqueWords.add(word);
-                }
-            }
-
-            if (uniqueWords.size === 0) {
-                alert('未从文本中提取到任何有效的英文单词！');
-                return;
-            }
-
-            // 获取选定的级别
             const level = parseInt(document.getElementById('extract-level').value, 10);
-            
-            // 为了做高精度的过滤，我们可以列出一个“常见极简词”黑名单，剔除 basic helper verbs/pronouns
-            const filterOut = new Set([
-                "the", "and", "you", "that", "was", "for", "are", "with", "his", "they", "this",
-                "have", "from", "one", "had", "word", "but", "not", "what", "all", "were", "when",
-                "your", "can", "said", "there", "use", "an", "each", "which", "she", "do", "how",
-                "their", "if", "will", "up", "other", "about", "out", "many", "then", "them", "these",
-                "so", "some", "her", "would", "make", "like", "him", "into", "time", "has", "look",
-                "two", "more", "write", "go", "see", "number", "no", "way", "could", "people", "my",
-                "than", "first", "been", "call", "who", "its", "now", "find", "long", "down", "day",
-                "did", "get", "come", "made", "may", "part"
-            ]);
-
             previewWords = [];
-            const wordList = Array.from(uniqueWords).filter(w => !filterOut.has(w));
+            const seenWords = new Set();
             
-            // 限制最多一次预览 40 个单词，防止海量渲染卡死
-            const slicedList = wordList.slice(0, 40);
+            // ======= 策略1：精准匹配人教版 PEP 词汇表格式 =======
+            // 每行可能拼装了多个条目，如 "*apple /'æpl/ 苹果 p. 40 *animal /'ænɪml/ 动物 p. 33"
+            const lines = text.split('\n');
+            const vocabRegex = /\*?([a-zA-Z][a-zA-Z\s\-']*?)\s+\/[^\/]+\/\s*([\u4e00-\u9fff\uff08（].*?)(?=\s*\*?[a-zA-Z]+\s+\/|\s*p\.?\s*\d+|$)/g;
+            const noPhoneticRegex = /\*([a-zA-Z][a-zA-Z\s\-']*?)\s+([\u4e00-\u9fff\uff08（].*?)(?=\s*\*?[a-zA-Z]+\s+|\s*p\.?\s*\d+|$)/g;
             
-            document.getElementById('extraction-preview-section').style.display = 'block';
-            const container = document.getElementById('preview-rows-container');
-            container.innerHTML = '正在加载释义中...';
-
-            for (let word of slicedList) {
-                // 1. 先查本地内置字典
-                let cn = commonDict[word] || '';
-                
-                // 2. 如果本地字典没有，通过 MyMemory 翻译 API 获取（它支持 CORS，完全免费）
-                if (!cn) {
-                    try {
-                        let response = await fetch(`https://api.mymemory.translated.net/get?q=${word}&langpair=en|zh-CN`);
-                        let data = await response.json();
-                        if (data && data.responseData && data.responseData.translatedText) {
-                            let trans = data.responseData.translatedText;
-                            // 过滤掉拼音或乱码，去除首尾符号
-                            if (!/[a-zA-Z]/.test(trans)) {
-                                cn = trans;
-                            }
-                        }
-                    } catch(e) {
-                        // 离线或翻译失败
+            for (let line of lines) {
+                let match;
+                while ((match = vocabRegex.exec(line)) !== null) {
+                    let enWord = match[1].trim().toLowerCase();
+                    let cnMeaning = match[2].trim();
+                    cnMeaning = cnMeaning.replace(/\s*p\.?\s*\d+\s*$/, '').trim();
+                    cnMeaning = cnMeaning.replace(/[；;，,\s]+$/, '').trim();
+                    if (enWord.length >= 2 && !seenWords.has(enWord)) {
+                        seenWords.add(enWord);
+                        previewWords.push({ en: enWord, cn: cnMeaning, level: level, example: `This is a ${enWord}.` });
                     }
                 }
                 
-                // 3. 还是没有，就留空由用户双击编辑
-                if (!cn) {
-                    cn = "双击输入翻译";
+                while ((match = noPhoneticRegex.exec(line)) !== null) {
+                    let enWord = match[1].trim().toLowerCase();
+                    if (seenWords.has(enWord)) continue;
+                    let cnMeaning = match[2].trim();
+                    cnMeaning = cnMeaning.replace(/\s*p\.?\s*\d+\s*$/, '').trim();
+                    cnMeaning = cnMeaning.replace(/[；;，,\s]+$/, '').trim();
+                    if (enWord.length >= 2) {
+                        seenWords.add(enWord);
+                        previewWords.push({ en: enWord, cn: cnMeaning, level: level, example: `This is a ${enWord}.` });
+                    }
                 }
+            }
 
-                previewWords.push({ en: word, cn: cn, level: level, example: `This is a ${word}.` });
+            // ======= 策略2（兜底）：如果词汇表格式匹配结果太少，退回通用提取模式 =======
+            if (previewWords.length < 5) {
+                const regex = /[a-zA-Z]+/g;
+                const uniqueWords = new Set();
+                let match;
+                while ((match = regex.exec(text)) !== null) {
+                    const word = match[0].toLowerCase();
+                    if (word.length >= 3 && !seenWords.has(word)) {
+                        uniqueWords.add(word);
+                    }
+                }
+                
+                const filterOut = new Set([
+                    "the", "and", "you", "that", "was", "for", "are", "with", "his", "they", "this",
+                    "have", "from", "one", "had", "word", "but", "not", "what", "all", "were", "when",
+                    "your", "can", "said", "there", "use", "an", "each", "which", "she", "do", "how",
+                    "their", "if", "will", "up", "other", "about", "out", "many", "then", "them", "these",
+                    "so", "some", "her", "would", "make", "like", "him", "into", "time", "has", "look",
+                    "two", "more", "write", "go", "see", "number", "no", "way", "could", "people", "my",
+                    "than", "first", "been", "call", "who", "its", "now", "find", "long", "down", "day",
+                    "did", "get", "come", "made", "may", "part", "page", "vocabulary", "appendix", "pep"
+                ]);
+                
+                const wordList = Array.from(uniqueWords).filter(w => !filterOut.has(w));
+                
+                document.getElementById('extraction-preview-section').style.display = 'block';
+                const container = document.getElementById('preview-rows-container');
+                container.innerHTML = '正在加载释义中...';
+
+                for (let word of wordList) {
+                    let cn = commonDict[word] || '';
+                    if (!cn) {
+                        try {
+                            let response = await fetch(`https://api.mymemory.translated.net/get?q=${word}&langpair=en|zh-CN`);
+                            let data = await response.json();
+                            if (data && data.responseData && data.responseData.translatedText) {
+                                let trans = data.responseData.translatedText;
+                                if (!/[a-zA-Z]/.test(trans)) {
+                                    cn = trans;
+                                }
+                            }
+                        } catch(e) {}
+                    }
+                    if (!cn) cn = "双击输入翻译";
+                    previewWords.push({ en: word, cn: cn, level: level, example: `This is a ${word}.` });
+                }
+            } else {
+                document.getElementById('extraction-preview-section').style.display = 'block';
+            }
+
+            if (previewWords.length === 0) {
+                alert('未从文本中提取到任何有效的英文单词！请确认您上传的是包含单词列表的文档。');
+                return;
             }
 
             renderPreviewList();
